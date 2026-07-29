@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "WebPaint 网页标注",
+  "version": "1.0.0",
+  "description": "在任意网页上绘画标注：画笔、箭头、矩形、文字、橡皮擦，支持撤销重做与截图导出。",
+  "permissions": ["scripting", "activeTab", "downloads"],
+  "action": {
+    "default_title": "WebPaint 标注（点击开启/切换）",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

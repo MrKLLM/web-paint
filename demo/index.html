@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebPaint.js — 网页绘画标注插件演示</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #2b2f36;
+    background: #f6f8fa;
+    line-height: 1.7;
+  }
+  header {
+    background: linear-gradient(135deg, #0091ff 0%, #8e4ec6 100%);
+    color: #fff;
+    padding: 56px 24px 48px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 10px; font-size: 34px; }
+  header p { margin: 0; opacity: .92; font-size: 16px; }
+  .container { max-width: 860px; margin: 0 auto; padding: 32px 24px 80px; }
+  .card {
+    background: #fff;
+    border: 1px solid #e4e7eb;
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .card h2 { margin-top: 0; font-size: 20px; }
+  .tip {
+    background: #eef7ff;
+    border-left: 4px solid #0091ff;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 14px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { border: 1px solid #e4e7eb; padding: 8px 12px; text-align: left; }
+  th { background: #f0f3f6; }
+  code, pre {
+    font-family: Consolas, "JetBrains Mono", monospace;
+    background: #f0f3f6;
+    border-radius: 4px;
+  }
+  code { padding: 2px 6px; font-size: 13px; }
+  pre { padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
+  pre code { padding: 0; background: none; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  button.demo-btn {
+    padding: 9px 18px;
+    border: 1px solid #d0d5dc;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button.demo-btn:hover { background: #f0f3f6; }
+  button.demo-btn.primary { background: #0091ff; border-color: #0091ff; color: #fff; }
+  button.demo-btn.primary:hover { background: #007ee0; }
+  .chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+    height: 160px;
+    padding: 12px 8px 0;
+  }
+  .bar { flex: 1; border-radius: 6px 6px 0 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; color: #fff; font-size: 12px; padding-bottom: 6px; }
+  .chart-labels { display: flex; gap: 18px; padding: 6px 8px 0; }
+  .chart-labels span { flex: 1; text-align: center; font-size: 13px; color: #6b7280; }
+  footer { text-align: center; color: #9aa1ab; font-size: 13px; padding-bottom: 40px; }
+  @media (max-width: 600px) { header h1 { font-size: 26px; } .card { padding: 18px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🖌️ WebPaint.js</h1>
+  <p>轻量级网页绘画标注插件 · 零依赖 · 一行代码集成</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>🚀 快速体验</h2>
+    <p class="tip">点击 <b>「开始标注」</b> 或右下角悬浮球进入标注模式，即可在整个页面上自由绘画。工具栏在右侧（手机上在底部），<b>按住顶部的 ⠿ 手柄可拖到任意位置</b>。试试新增的<b>荧光笔</b> —— 半透明笔触，划重点神器。退出标注后，页面恢复正常交互，标注内容仍然保留。</p>
+    <div class="btn-row">
+      <button class="demo-btn primary" onclick="wp.enable()">🖊 开始标注</button>
+      <button class="demo-btn" onclick="wp.disable()">👆 浏览页面</button>
+      <button class="demo-btn" onclick="wp.undo()">↩ 撤销</button>
+      <button class="demo-btn" onclick="wp.redo()">↪ 重做</button>
+      <button class="demo-btn" onclick="wp.clear()">🗑 清空</button>
+      <button class="demo-btn" onclick="wp.exportImage()">💾 导出图片</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📊 试试在这张图表上标注</h2>
+    <p>比如用<b>矩形框</b>圈出最高的柱子，再用<b>箭头 + 文字</b>说明原因：</p>
+    <div class="chart">
+      <div class="bar" style="height:45%;background:#5aa9f7">45</div>
+      <div class="bar" style="height:62%;background:#42b883">62</div>
+      <div class="bar" style="height:88%;background:#e5484d">88</div>
+      <div class="bar" style="height:55%;background:#f5a623">55</div>
+      <div class="bar" style="height:70%;background:#8e4ec6">70</div>
+    </div>
+    <div class="chart-labels">
+      <span>一月</span><span>二月</span><span>三月</span><span>四月</span><span>五月</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📦 集成方式</h2>
+    <p>只需引入一个 JS 文件，无任何依赖：</p>
+    <pre><code>&lt;script src="webpaint.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const wp = new WebPaint({
+    color: '#e5484d',   // 默认颜色
+    size: 4,            // 默认粗细
+    toolbar: true,      // 使用内置工具栏
+    autoEnable: false   // 是否立即进入标注模式
+  });
+  wp.enable();          // 进入标注模式
+&lt;/script&gt;</code></pre>
+  </div>
+
+  <div class="card">
+    <h2>🔧 API 一览</h2>
+    <table>
+      <tr><th>方法</th><th>说明</th></tr>
+      <tr><td><code>wp.enable() / disable() / toggle()</code></td><td>进入 / 退出 / 切换标注模式（退出后画布穿透，不影响页面交互）</td></tr>
+      <tr><td><code>wp.setTool(tool)</code></td><td>切换工具：<code>pen</code> / <code>highlighter</code> / <code>arrow</code> / <code>rect</code> / <code>text</code> / <code>eraser</code></td></tr>
+      <tr><td><code>wp.setColor(color) / setSize(size)</code></td><td>设置画笔颜色 / 粗细</td></tr>
+      <tr><td><code>wp.undo() / redo() / clear()</code></td><td>撤销 / 重做 / 一键清空（支持 Ctrl+Z / Ctrl+Y）</td></tr>
+      <tr><td><code>wp.exportImage(opts)</code></td><td>导出图片：<code>{mode:'page'}</code> 整页含标注，<code>{mode:'layer'}</code> 仅标注层</td></tr>
+      <tr><td><code>wp.getData() / loadData(data)</code></td><td>获取 / 载入标注矢量数据（可持久化到服务器）</td></tr>
+      <tr><td><code>wp.on('change', fn)</code></td><td>事件订阅：<code>change / enable / disable / toolchange</code></td></tr>
+      <tr><td><code>wp.destroy()</code></td><td>销毁插件，移除所有 DOM 与事件</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>📖 一段用来练手的文章</h2>
+    <p>Canvas 是 HTML5 提供的位图绘制接口。WebPaint 在页面顶层铺设了一张覆盖整个文档的透明画布，所有绘制都以<b>矢量对象</b>的形式记录——这意味着窗口缩放、屏幕 DPR 变化时都可以无损重绘，撤销与重做也只是对对象列表的增删。</p>
+    <p>橡皮擦使用 <code>destination-out</code> 合成模式实现真正的"擦除"，而不是简单地涂白色；文字标注则会在点击处弹出一个所见即所得的输入框，回车即可落到画布上。试着在这段文字上划几笔重点线吧！</p>
+  </div>
+
+</div>
+
+<footer>WebPaint.js Demo · 响应式设计，试试缩放窗口或用手机打开</footer>
+
+<script src="../webpaint.js"></script>
+<script>
+  var wp = new WebPaint({
+    color: '#e5484d',
+    size: 4,
+    toolbar: true,
+    autoEnable: false
+  });
+  // 事件示例
+  wp.on('change', function () {
+    console.log('[WebPaint] 当前标注对象数量：', wp.getData().length);
+  });
+</script>
+</body>
+</html>
