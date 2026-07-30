@@ -19,6 +19,7 @@
     size: 4,                 // 默认线宽
     tool: 'pen',             // 默认工具 pen|highlighter|arrow|rect|text|eraser
     toolbar: true,           // 是否显示内置工具栏
+    toolbarDirection: 'vertical', // 工具栏展开方向：'vertical' 纵向 | 'horizontal' 横向
     hotkeys: true,           // Ctrl+Z / Ctrl+Y 快捷键
     autoEnable: false,       // 初始化后立即进入标注模式
     presetColors: ['#e5484d', '#ff8c00', '#f5c518', '#30a46c', '#0091ff', '#8e4ec6', '#1c2024', '#ffffff'],
@@ -38,13 +39,20 @@
     clear: '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2m-8 0l1 13h8l1-13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     save: '<svg viewBox="0 0 24 24"><path d="M12 3v11m0 0l-4-4m4 4l4-4M4 17v3h16v-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
-    brush: '<svg viewBox="0 0 24 24"><path d="M3 21l3.5-1 12-12a2.1 2.1 0 0 0-3-3l-12 12L3 21z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
+    brush: '<svg viewBox="0 0 24 24"><path d="M3 21l3.5-1 12-12a2.1 2.1 0 0 0-3-3l-12 12L3 21z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+    rows: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="4" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="15" width="18" height="4" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+    cols: '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="4" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="15" y="3" width="4" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
   };
 
   var CSS = [
     '.wp-ui{--wp-bg:#fff;--wp-fg:#3a3f45;--wp-line:#e4e7eb;--wp-accent:#0091ff;box-sizing:border-box;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}',
     '.wp-ui *{box-sizing:border-box;}',
     '.wp-toolbar{position:fixed;top:50%;right:16px;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 8px;background:var(--wp-bg);border:1px solid var(--wp-line);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.14);user-select:none;max-height:92vh;overflow-y:auto;overflow-x:hidden;}',
+    '.wp-toolbar.wp-horizontal{top:auto;right:auto;bottom:20px;left:50%;transform:translateX(-50%);flex-direction:row;max-height:none;max-width:92vw;overflow-x:auto;overflow-y:hidden;}',
+    '.wp-toolbar.wp-horizontal .wp-sep{width:1px;height:26px;margin:0 3px;}',
+    '.wp-toolbar.wp-horizontal .wp-colors{grid-template-columns:repeat(4,18px);}',
+    '.wp-toolbar.wp-horizontal .wp-size{writing-mode:horizontal-tb;direction:ltr;width:70px;height:22px;}',
+    '.wp-toolbar.wp-horizontal .wp-drag{width:20px;height:38px;}',
     '.wp-drag{width:38px;height:20px;display:flex;align-items:center;justify-content:center;color:#b6bdc6;cursor:grab;flex:0 0 auto;touch-action:none;border-radius:6px;}',
     '.wp-drag:hover{background:#f0f3f6;color:#8a929c;}',
     '.wp-drag:active{cursor:grabbing;}',
@@ -61,8 +69,13 @@
     '.wp-color-input{width:38px;height:24px;border:1px solid var(--wp-line);border-radius:6px;padding:1px;background:#fff;cursor:pointer;}',
     '.wp-size{writing-mode:vertical-lr;direction:rtl;height:70px;width:22px;accent-color:var(--wp-accent);cursor:pointer;}',
     '.wp-size-dot{border-radius:50%;background:var(--wp-fg);margin:2px auto;flex:0 0 auto;}',
-    '.wp-fab{position:fixed;right:16px;bottom:20px;width:48px;height:48px;border-radius:50%;border:none;background:var(--wp-accent);color:#fff;box-shadow:0 6px 20px rgba(0,145,255,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;}',
-    '.wp-fab svg{width:22px;height:22px;}',
+    '.wp-fab{position:fixed;right:16px;bottom:20px;width:48px;height:48px;border-radius:50%;border:none;background:var(--wp-accent);color:#fff;box-shadow:0 6px 20px rgba(0,145,255,.4);cursor:grab;display:flex;align-items:center;justify-content:center;touch-action:none;}',
+    '.wp-fab:hover{filter:brightness(1.05);}',
+    '.wp-fab.wp-dragging{cursor:grabbing;}',
+    '.wp-fab svg{width:22px;height:22px;pointer-events:none;}',
+    '.wp-fab-close{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:2px solid #fff;background:#fff;color:#6b7280;font-size:14px;line-height:1;display:none;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer;padding:0;z-index:1;}',
+    '.wp-fab:hover .wp-fab-close{display:flex;}',
+    '.wp-fab-close:hover{background:#fee2e2;color:#dc2626;}',
     '.wp-text-editor{position:absolute;min-width:120px;min-height:1.4em;padding:4px 6px;border:1.5px dashed var(--wp-accent);border-radius:4px;background:rgba(255,255,255,.6);outline:none;resize:none;overflow:hidden;line-height:1.35;font-family:inherit;}',
     '.wp-toast{position:fixed;left:50%;top:24px;transform:translateX(-50%);background:rgba(28,32,36,.9);color:#fff;font-size:13px;padding:8px 16px;border-radius:8px;z-index:2147483647;transition:opacity .3s;}',
     '@media (max-width:768px){.wp-toolbar{top:auto;right:8px;left:8px;bottom:12px;transform:none;flex-direction:row;max-height:none;max-width:none;overflow-x:auto;overflow-y:hidden;padding:8px 10px;gap:4px;}.wp-sep{width:1px;height:26px;margin:0 3px;}.wp-colors{grid-template-columns:repeat(4,18px);}.wp-size{writing-mode:horizontal-tb;direction:ltr;width:70px;height:22px;}.wp-drag{width:20px;height:38px;}}'
@@ -415,7 +428,7 @@
       this._removeTextEditor();
       this.canvas.style.pointerEvents = 'none';
       if (this._toolbar) this._toolbar.style.display = 'none';
-      if (this._fab && this.opts.toolbar) this._fab.style.display = '';
+      if (this._fab && this.opts.toolbar && !this._fabHidden) this._fab.style.display = '';
       this._emit('disable');
       return this;
     },
@@ -432,6 +445,28 @@
 
     setColor: function (color) { this.color = color; this._syncToolbar(); return this; },
     setSize: function (size) { this.size = Math.max(1, +size || 1); this._syncToolbar(); return this; },
+
+    setToolbarDirection: function (dir) {
+      if (dir !== 'vertical' && dir !== 'horizontal') return this;
+      this.toolbarDirection = dir;
+      this._applyToolbarDirection();
+      this._emit('toolbardirectionchange', dir);
+      return this;
+    },
+
+    showFab: function () {
+      this._fabHidden = false;
+      if (this._fab) this._fab.style.display = '';
+      this._emit('fabvisibilitychange', true);
+      return this;
+    },
+    hideFab: function () {
+      this._hideFab();
+      return this;
+    },
+    setFabVisible: function (visible) {
+      return visible ? this.showFab() : this.hideFab();
+    },
 
     canUndo: function () { return this.undoStack.length > 0; },
     canRedo: function () { return this.redoStack.length > 0; },
@@ -556,6 +591,19 @@
       this._bindToolbarDrag(bar, handle);
       bar.appendChild(handle);
 
+      // 工具栏展开方向切换
+      var dirBtn = el('button', 'wp-btn', ICONS.cols);
+      dirBtn.title = '切换工具栏方向';
+      dirBtn.addEventListener('click', function () {
+        self.setToolbarDirection(self.toolbarDirection === 'vertical' ? 'horizontal' : 'vertical');
+      });
+      this._dirBtn = dirBtn;
+      bar.appendChild(dirBtn);
+      bar.appendChild(el('div', 'wp-sep'));
+
+      this.toolbarDirection = this.opts.toolbarDirection || 'vertical';
+      this._applyToolbarDirection();
+
       var tools = [
         ['pen', '画笔'], ['highlighter', '荧光笔'], ['arrow', '箭头'], ['rect', '矩形框'], ['text', '文字标注'], ['eraser', '橡皮擦']
       ];
@@ -625,12 +673,23 @@
       document.body.appendChild(bar);
       this._toolbar = bar;
 
-      // 悬浮球：浏览模式下点击可回到标注模式
+      // 悬浮球：浏览模式下点击可回到标注模式，且可拖拽移动、可关闭
       var fab = el('button', 'wp-ui wp-fab', ICONS.brush);
-      fab.title = '开始标注';
+      fab.title = '开始标注（按住可拖动位置，悬停可关闭）';
       fab.style.zIndex = this.opts.zIndex + 1;
       fab.setAttribute('data-html2canvas-ignore', '');
+      this._bindFabDrag(fab);
       fab.addEventListener('click', function () { self.enable(); });
+      // 关闭按钮：隐藏悬浮球，便于整页截图等场景
+      var fabClose = el('span', 'wp-fab-close', '×');
+      fabClose.title = '隐藏悬浮球';
+      fabClose.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+      fabClose.addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        self._hideFab();
+      });
+      fab.appendChild(fabClose);
       document.body.appendChild(fab);
       this._fab = fab;
 
@@ -678,6 +737,84 @@
         bar.style.left = x + 'px';
         bar.style.top = y + 'px';
       });
+    },
+
+    _bindFabDrag: function (fab) {
+      var self = this, sx, sy, ox, oy, dragging = false, moved = false;
+      fab.addEventListener('pointerdown', function (e) {
+        if (e.button !== 0) return;
+        if (e.target && e.target.closest && e.target.closest('.wp-fab-close')) return;
+        e.preventDefault();
+        fab.setPointerCapture(e.pointerId);
+        fab.classList.add('wp-dragging');
+        dragging = true;
+        moved = false;
+        var r = fab.getBoundingClientRect();
+        // 首次拖动时把 right/bottom 定位换算成 left/top，之后自由移动
+        fab.style.left = r.left + 'px';
+        fab.style.top = r.top + 'px';
+        fab.style.right = 'auto';
+        fab.style.bottom = 'auto';
+        sx = e.clientX; sy = e.clientY;
+        ox = r.left; oy = r.top;
+      });
+      fab.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        e.preventDefault();
+        var dx = e.clientX - sx, dy = e.clientY - sy;
+        if (Math.abs(dx) < 2 && Math.abs(dy) < 2) return;
+        moved = true;
+        var r = fab.getBoundingClientRect();
+        var x = Math.max(8, Math.min(ox + dx, window.innerWidth - r.width - 8));
+        var y = Math.max(8, Math.min(oy + dy, window.innerHeight - r.height - 8));
+        fab.style.left = x + 'px';
+        fab.style.top = y + 'px';
+      });
+      var up = function (e) {
+        dragging = false;
+        fab.classList.remove('wp-dragging');
+        try { fab.releasePointerCapture(e.pointerId); } catch (err) {}
+      };
+      fab.addEventListener('pointerup', up);
+      fab.addEventListener('pointercancel', up);
+      // 窗口缩放后确保球体仍在视口内
+      this._on(window, 'resize', function () {
+        var r = fab.getBoundingClientRect();
+        var x = Math.max(8, Math.min(r.left, window.innerWidth - r.width - 8));
+        var y = Math.max(8, Math.min(r.top, window.innerHeight - r.height - 8));
+        fab.style.left = x + 'px';
+        fab.style.top = y + 'px';
+        fab.style.right = 'auto';
+        fab.style.bottom = 'auto';
+      });
+      // 拖拽过程中不触发点击（启用标注）
+      fab.addEventListener('click', function (e) {
+        if (moved) { e.stopImmediatePropagation(); moved = false; }
+      });
+    },
+
+    _applyToolbarDirection: function () {
+      if (!this._toolbar) return;
+      var isH = this.toolbarDirection === 'horizontal';
+      this._toolbar.classList.toggle('wp-horizontal', isH);
+      if (this._dirBtn) {
+        this._dirBtn.innerHTML = isH ? ICONS.cols : ICONS.rows;
+        this._dirBtn.title = isH ? '切换为纵向排列' : '切换为横向排列';
+      }
+      // 用户未手动拖动过工具栏时，切换方向后重置为默认定位
+      if (!this._barMoved) {
+        this._toolbar.style.left = '';
+        this._toolbar.style.top = '';
+        this._toolbar.style.right = '';
+        this._toolbar.style.bottom = '';
+        this._toolbar.style.transform = '';
+      }
+    },
+
+    _hideFab: function () {
+      this._fabHidden = true;
+      if (this._fab) this._fab.style.display = 'none';
+      this._emit('fabvisibilitychange', false);
     },
 
     _syncToolbar: function () {

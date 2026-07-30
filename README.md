@@ -16,6 +16,9 @@
 | 📚 图层管理 | 画布浮于页面之上；退出标注模式后指针穿透，完全不影响原页面交互 |
 | 📱 响应式 | 适配 DPR / 窗口缩放无损重绘；移动端工具栏自动切换为底部横排，支持触屏 |
 | ✋ 可拖动工具栏 | 按住工具栏顶部 ⠿ 手柄可拖到任意位置，自动限制在视口内 |
+| 🔘 可拖拽悬浮球 | 右下角蓝色悬浮球可按住拖动到任意位置，松开后保持停留 |
+| ✖️ 可关闭悬浮球 | 悬停悬浮球出现 × 可将其隐藏，整页截图不再被遮挡；随时可重新显示 |
+| ↔️ 工具栏方向切换 | 支持纵向（默认）或横向展开工具栏，一键切换排列方向 |
 
 ## 快速开始
 
@@ -40,6 +43,7 @@ const wp = new WebPaint({
   size: 4,               // 默认线宽 (px)
   tool: 'pen',           // 默认工具 pen | highlighter | arrow | rect | text | eraser
   toolbar: true,         // 是否渲染内置工具栏 + 悬浮球（false 时可完全自建 UI）
+  toolbarDirection: 'vertical', // 工具栏展开方向：'vertical' 纵向 | 'horizontal' 横向
   hotkeys: true,         // 是否启用 Ctrl+Z / Ctrl+Y
   presetColors: [...],   // 工具栏预设色板
   autoEnable: false,     // 初始化后立即进入标注模式
@@ -55,11 +59,13 @@ const wp = new WebPaint({
 | `setTool(tool)` | `pen` / `highlighter` / `arrow` / `rect` / `text` / `eraser` |
 | `setColor(color)` | 设置颜色，任意 CSS 颜色值 |
 | `setSize(size)` | 设置线宽（文字大小随线宽联动） |
+| `setToolbarDirection(dir)` | 设置工具栏展开方向：`'vertical'` 纵向 / `'horizontal'` 横向 |
+| `showFab()` / `hideFab()` / `setFabVisible(bool)` | 显示 / 隐藏悬浮球 / 按布尔值设置（隐藏后整页截图不再被遮挡，可随时重新显示） |
 | `undo()` / `redo()` / `clear()` | 撤销 / 重做 / 清空 |
 | `canUndo()` / `canRedo()` | 是否可撤销 / 重做 |
 | `exportImage(opts)` | 导出图片，返回 `Promise<dataURL>`。`opts`：`mode: 'page'|'layer'`、`filename`、`download: false` 时仅返回不下载 |
 | `getData()` / `loadData(data)` | 获取 / 载入标注矢量数据（JSON，可持久化） |
-| `on(type, fn)` / `off(type, fn)` | 事件：`change` / `enable` / `disable` / `toolchange` |
+| `on(type, fn)` / `off(type, fn)` | 事件：`change` / `enable` / `disable` / `toolchange` / `toolbardirectionchange` / `fabvisibilitychange` |
 | `destroy()` | 销毁实例，移除全部 DOM 与事件监听 |
 
 ## 自建 UI 示例
@@ -135,6 +141,9 @@ web-paint/
 
 - `Ctrl+Z` 撤销，`Ctrl+Y`（或 `Ctrl+Shift+Z`）重做
 - 按住工具栏顶部的 ⠿ 手柄可把工具栏拖到屏幕任意位置（自动限制在当前视口内）
+- 工具栏上的方向按钮可一键切换纵向 / 横向展开；也支持 API `wp.setToolbarDirection('horizontal')`
+- 右下角蓝色悬浮球可按住拖动到任意位置，松开后保持停留；点击则进入标注模式
+- 悬停悬浮球右上角出现的 × 可隐藏它，整页截图不再被遮挡；需要时调用 `wp.showFab()` 重新显示
 - 移动端工具栏会自动切换为底部横排，支持触屏绘制
 
 ### 隐私与安全
