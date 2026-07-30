@@ -257,7 +257,6 @@
           if (o.type === 'highlighter') {
             ctx.globalAlpha = 0.35;             // 半透明荧光效果
             ctx.globalCompositeOperation = 'multiply'; // 与文字叠加更像真实荧光笔
-            ctx.lineCap = 'butt';               // 平头笔帽
           }
           ctx.lineWidth = o.size;
           ctx.beginPath();
@@ -268,6 +267,8 @@
             // 二次贝塞尔平滑
             ctx.quadraticCurveTo(prev.x, prev.y, (prev.x + cur.x) / 2, (prev.y + cur.y) / 2);
           }
+          // 确保画到最后一个点，避免笔触末端出现缺口
+          if (pts.length) ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
           ctx.stroke();
           break;
         case 'rect':
@@ -433,7 +434,17 @@
       return this;
     },
 
-    toggle: function () { return this.enabled ? this.disable() : this.enable(); },
+    toggle: function () {
+      // 悬浮球被用户关掉后，再次点击插件图标优先把它唤回（并回到浏览模式）
+      if (this._fabHidden) {
+        this.showFab();
+        if (this.enabled) this.disable();
+        return this;
+      }
+      // 否则正常在「标注 / 浏览」之间切换
+      if (this.enabled) this.disable(); else this.enable();
+      return this;
+    },
 
     setTool: function (tool) {
       if (['pen', 'highlighter', 'arrow', 'rect', 'text', 'eraser'].indexOf(tool) === -1) return this;
@@ -728,9 +739,10 @@
       var up = function (e) { dragging = false; };
       handle.addEventListener('pointerup', up);
       handle.addEventListener('pointercancel', up);
-      // 窗口缩放后确保工具栏仍在视口内
+      // 窗口缩放后确保工具栏仍在视口内（隐藏时不读取 rect，避免被钉到左上角）
       this._on(window, 'resize', function () {
         if (!self._barMoved) return;
+        if (bar.style.display === 'none') return;
         var r = bar.getBoundingClientRect();
         var x = Math.max(8, Math.min(r.left, window.innerWidth - r.width - 8));
         var y = Math.max(8, Math.min(r.top, window.innerHeight - r.height - 8));
@@ -764,6 +776,7 @@
         var dx = e.clientX - sx, dy = e.clientY - sy;
         if (Math.abs(dx) < 2 && Math.abs(dy) < 2) return;
         moved = true;
+        self._fabMoved = true;
         var r = fab.getBoundingClientRect();
         var x = Math.max(8, Math.min(ox + dx, window.innerWidth - r.width - 8));
         var y = Math.max(8, Math.min(oy + dy, window.innerHeight - r.height - 8));
@@ -777,8 +790,11 @@
       };
       fab.addEventListener('pointerup', up);
       fab.addEventListener('pointercancel', up);
-      // 窗口缩放后确保球体仍在视口内
+      // 窗口缩放后确保球体仍在视口内（仅用户拖过且当前可见时才干预，
+      // 否则隐藏时 getBoundingClientRect 返回全 0 会把球钉到左上角）
       this._on(window, 'resize', function () {
+        if (!self._fabMoved) return;
+        if (fab.style.display === 'none') return;
         var r = fab.getBoundingClientRect();
         var x = Math.max(8, Math.min(r.left, window.innerWidth - r.width - 8));
         var y = Math.max(8, Math.min(r.top, window.innerHeight - r.height - 8));
